@@ -1,0 +1,21 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>net8.0</TargetFramework>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <Nullable>enable</Nullable>
+
+        <PackageId>FreyjaStudio.ClassWrapper</PackageId>
+        <Version>1.0.0</Version>
+        <Authors>Krun</Authors>
+        <Description>A bunch of class to use with generators to extend class</Description>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\ClassWrapperGenerator\ClassWrapperGenerator\ClassWrapperGenerator.csproj" />
+        <ProjectReference Include="..\ClassWrapperGenerator\ClassWrapperGenerator.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false"/>
+    </ItemGroup>
+    <ItemGroup>
+        <None Include="$(OutputPath)\$(AssemblyName).dll" Pack="true" PackagePath="analyzers/dotnet/cs" Visible="false" />
+    </ItemGroup>
+</Project>
