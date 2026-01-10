@@ -1,9 +1,12 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
     <PropertyGroup>
-        <TargetFramework>net9.0</TargetFramework>
+        <TargetFramework>net8.0</TargetFramework>
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
+        <PackageId>FreyjaStudio.BasicComponents</PackageId>
+        <Version>1.0.0</Version>
+        <Authors>Krun</Authors>
+        <Description>A bunch of Basic components for every day uses.</Description>
     </PropertyGroup>
-
 </Project>
