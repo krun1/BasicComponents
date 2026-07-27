@@ -5,7 +5,6 @@
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
         <PackageId>FreyjaStudio.BasicComponents</PackageId>
-        <Version>1.0.0</Version>
         <Authors>Krun</Authors>
         <Description>A bunch of Basic components for every day uses.</Description>
     </PropertyGroup>
