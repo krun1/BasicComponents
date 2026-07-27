@@ -32,7 +32,7 @@ jobs:
         run: dotnet build -c Release --no-restore
 
       - name: Pack
-        run: dotnet pack -c Release --no-build -o ./nupkg -p:PackageVersion=${{ steps.version.outputs.VERSION }}
+        run: dotnet pack ./BasicComponents/BasicComponents.csproj -c Release --no-build -o ./nupkg -p:PackageVersion=${{ steps.version.outputs.VERSION }}
 
       - name: Push to GitHub Packages
         run: dotnet nuget push ./nupkg/*.nupkg --source "https://nuget.pkg.github.com/${{ github.repository_owner }}/index.json" --api-key ${{ secrets.GITHUB_TOKEN }} --skip-duplicate
