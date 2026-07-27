@@ -26,4 +26,7 @@ public static class DataOrError
             return Error<T>(e);
         }
     }
+    
+    public static DataOrError<TValue> TryGetValue<TKey, TValue>(TKey key, Maybe.TryGetValueDelegate<TKey, TValue> func, Func<Either<string, Exception>> errorFunc)
+        => func(key, out var value) ? Create(value) : errorFunc().Resolve(Error<TValue>, Error<TValue>);
 }
