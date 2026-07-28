@@ -30,3 +30,45 @@ public static class DataOrErrorExtension
         });
     }
 }
+
+public static class DataOrErrorAsyncExtension
+{
+    public static async Task<TResult> ResolveAsync<T, TResult>(this Task<DataOrError<T>> value,
+        Func<T, TResult> ifValid, Func<Exception, TResult> ifError)
+    {
+        var v = await value;
+        return v.IsValid ? ifValid(v.Value) : ifError(v.Error);
+    }
+
+    public static async Task<DataOrError<TResult>> SelectAsync<T, TResult>(this Task<DataOrError<T>> value, Func<T, TResult> func)
+    {
+        var v = await value;
+
+        return v.IsValid ? DataOrError.Try(() => func(v.Value)) : DataOrError.Error<TResult>(v.Error);
+    }
+
+    public static async Task<DataOrError<TResult>> SelectAsync<T, TResult>(this Task<DataOrError<T>> value, Func<T, Task<TResult>> func)
+    {
+        var v = await value;
+
+        return v.IsValid ? await DataOrError.TryAsync(() => func(v.Value)) : DataOrError.Error<TResult>(v.Error);
+    }
+
+    public static async Task<DataOrError<TResult>> ThenAsync<T, TResult>(this Task<DataOrError<T>> value, Func<T, DataOrError<TResult>> func)
+    {
+        var v = await value;
+
+        return v.IsValid
+            ? DataOrError.Try(() => func(v.Value)).Flatten()
+            : DataOrError.Error<TResult>(v.Error);
+    }
+    
+    public static async Task<DataOrError<TResult>> ThenAsync<T, TResult>(this Task<DataOrError<T>> value, Func<T, Task<DataOrError<TResult>>> func)
+    {
+        var v = await value;
+
+        return v.IsValid
+            ? (await DataOrError.TryAsync(() => func(v.Value))).Flatten()
+            : DataOrError.Error<TResult>(v.Error);
+    }
+}

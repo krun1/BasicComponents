@@ -29,4 +29,17 @@ public static class DataOrError
     
     public static DataOrError<TValue> TryGetValue<TKey, TValue>(TKey key, Maybe.TryGetValueDelegate<TKey, TValue> func, Func<Either<string, Exception>> errorFunc)
         => func(key, out var value) ? Create(value) : errorFunc().Resolve(Error<TValue>, Error<TValue>);
+    
+    public static async Task<DataOrError<T>> TryAsync<T>(Func<Task<T>> func)
+    {
+        try
+        {
+            return await func();
+        }
+        catch (Exception e)
+        {
+            return Error<T>(e);
+        }
+    }
+
 }
