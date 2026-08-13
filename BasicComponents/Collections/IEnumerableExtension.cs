@@ -158,4 +158,27 @@ public static class IEnumerableExtension
         foreach (var item in items)
             collection.Add(item);
     }
+    
+    public static int SequenceHashCode<T>(this IEnumerable<T> source)
+    {
+        return SequenceHashCode(source, EqualityComparer<T>.Default);
+    }
+
+    public static int SequenceHashCode<T>(this IEnumerable<T> source, Func<T, int> selector)
+    {
+        var hash = 17;
+
+        foreach (var item in source)
+            hash = hash * 23 + selector(item);
+        return hash;
+    }
+    
+    public static int SequenceHashCode<T>(this IEnumerable<T> source, IEqualityComparer<T> comparer)
+    {
+        var hash = 17;
+
+        foreach (var item in source)
+            hash = hash * 23 + (item != null ? comparer.GetHashCode(item) : 0);
+        return hash;
+    }
 }
