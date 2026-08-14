@@ -29,6 +29,8 @@ public static class DataOrErrorExtension
                 e2 => DataOrError.Error<TResult>(new AggregateException(e1, e2)));
         });
     }
+
+    public static Check Check<T>(this DataOrError<T> value, Func<T, Check> func) => value.Resolve(func, Monad.Check.Failure);
 }
 
 public static class DataOrErrorAsyncExtension
