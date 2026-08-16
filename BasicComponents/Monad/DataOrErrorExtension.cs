@@ -30,7 +30,13 @@ public static class DataOrErrorExtension
         });
     }
 
-    public static Check Check<T>(this DataOrError<T> value, Func<T, Check> func) => value.Resolve(func, Monad.Check.Failure);
+    public static Check Check<T>(this DataOrError<T> value, Func<T, Check> func)
+        => value.Resolve(v => Monad.Check.Try(() => func(v)), Monad.Check.Failure);
+
+    public static Check Execute<T>(this DataOrError<T> value, Action<T> func)
+        => value.IsValid
+            ? Monad.Check.Try(() => func(value.Value))
+            : Monad.Check.Failure(value.Error);
 }
 
 public static class DataOrErrorAsyncExtension

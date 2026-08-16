@@ -41,5 +41,4 @@ public static class DataOrError
             return Error<T>(e);
         }
     }
-
 }

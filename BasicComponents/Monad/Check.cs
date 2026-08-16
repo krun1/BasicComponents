@@ -15,5 +15,29 @@ public class Check
 
     public static Check Success() => new(null!, true);
     public static Check Failure(Exception error) => new(error, false);
+    public static Check Try(Action action)
+    {
+        try
+        {
+            action();
+            return Success();
+        }
+        catch (Exception e)
+        {
+            return Failure(e);
+        }
+    }
+
+    public static Check Try(Func<Check> action)
+    {
+        try
+        {
+            return action();
+        }
+        catch (Exception e)
+        {
+            return Failure(e);
+        }
+    }
 }
 
