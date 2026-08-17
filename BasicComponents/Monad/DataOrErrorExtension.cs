@@ -62,6 +62,13 @@ public static class DataOrErrorAsyncExtension
         return v.IsValid ? await DataOrError.TryAsync(() => func(v.Value)) : DataOrError.Error<TResult>(v.Error);
     }
 
+    public static async Task<DataOrError<TResult>> SelectAsync<T, TResult>(this DataOrError<T> value, Func<T, Task<TResult>> func)
+    {
+        return value.IsValid
+            ? await DataOrError.TryAsync(() => func(value.Value))
+            : DataOrError.Error<TResult>(value.Error);
+    }
+
     public static async Task<DataOrError<TResult>> ThenAsync<T, TResult>(this Task<DataOrError<T>> value, Func<T, DataOrError<TResult>> func)
     {
         var v = await value;
@@ -78,5 +85,12 @@ public static class DataOrErrorAsyncExtension
         return v.IsValid
             ? (await DataOrError.TryAsync(() => func(v.Value))).Flatten()
             : DataOrError.Error<TResult>(v.Error);
+    }
+    
+    public static async Task<DataOrError<TResult>> ThenAsync<T, TResult>(this DataOrError<T> value, Func<T, Task<DataOrError<TResult>>> func)
+    {
+        return value.IsValid
+            ? (await DataOrError.TryAsync(() => func(value.Value))).Flatten()
+            : DataOrError.Error<TResult>(value.Error);
     }
 }
