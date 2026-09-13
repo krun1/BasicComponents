@@ -7,6 +7,14 @@ public static class CheckExtension
 
     public static DataOrError<T> Then<T>(this Check check, Func<DataOrError<T>> value)
         => check.IsValid ? value() : DataOrError.Error<T>(check.Error);
+    
+    public static Check Then(this Check check, Func<Check> value)
+        => check.IsValid ? Check.Try(value) : check;
+
+    public static Check And(this Check check, Check other)
+        => check.IsValid && other.IsValid 
+            ? Check.Success()
+            : Check.Failure(new AggregateException(check.Error, other.Error).Flatten());
 }
 
 public static class CheckAsyncExtension

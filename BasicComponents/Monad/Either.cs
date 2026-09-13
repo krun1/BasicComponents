@@ -37,4 +37,13 @@ public static class Either
             return Either<TFirst, TSecond>.CreateSecond(second);
         throw new InvalidOperationException("Impossible to create Either both value are null");
     }
+    
+    public static Either<TFirst, TSecond>? SingleOrDefault<TFirst, TSecond>(TFirst? first, TSecond? second)
+    {
+        if (first != null)
+            return Either<TFirst, TSecond>.CreateFirst(first);
+        if (second != null)
+            return Either<TFirst, TSecond>.CreateSecond(second);
+        return null;
+    }
 }

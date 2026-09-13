@@ -26,7 +26,7 @@ public static class DataOrErrorExtension
         }, e1 =>
         {
             return second.Resolve(r => DataOrError.Error<TResult>(e1),
-                e2 => DataOrError.Error<TResult>(new AggregateException(e1, e2)));
+                e2 => DataOrError.Error<TResult>(new AggregateException(e1, e2).Flatten()));
         });
     }
 
