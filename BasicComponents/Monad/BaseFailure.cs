@@ -52,8 +52,8 @@ public static class FailureExtension
     {
         if (s.IsHandled)
             return null;
-        if (s.GetType() == typeof(T))
-            return (T)s;
+        if (s is T t)
+            return t;
         if (s is AggregateFailure ae)
         {
             foreach (var a in ae.Inner)

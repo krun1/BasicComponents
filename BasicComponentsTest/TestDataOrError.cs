@@ -124,6 +124,17 @@ public class Tests
         Assert.That(i.Result.Value, Is.EqualTo(-1));
     }
 
+    class DerivedTestError(string s) : TestError(s) {}
+
+    [Test]
+    public void TestFlowHandlesDerivedError()
+    {
+        var i = DataOrError.Error<int>(new DerivedTestError("failure"))
+            .OnError((TestError e) => -1);
+
+        Assert.That(i.Resolve(v => v), Is.EqualTo(-1));
+    }
+
     [Test]
     public async Task TestFlowHandledErrorSurvivesAsyncSteps()
     {
