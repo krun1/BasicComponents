@@ -124,6 +124,18 @@ public class Tests
         Assert.That(i.Result.Value, Is.EqualTo(-1));
     }
 
+    [Test]
+    public async Task TestCheckTaskSelectAsync()
+    {
+        var success = await Task.FromResult(Check.Success())
+            .SelectAsync(() => Task.FromResult(1));
+        var failure = await Task.FromResult(Check.Fail(new TestError("failure")))
+            .SelectAsync(() => Task.FromResult(1));
+
+        Assert.That(success.Value, Is.EqualTo(1));
+        Assert.That(failure.Failure, Is.TypeOf<TestError>());
+    }
+
     class DerivedTestError(string s) : TestError(s) {}
 
     [Test]

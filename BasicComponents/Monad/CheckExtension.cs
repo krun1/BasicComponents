@@ -26,4 +26,10 @@ public static class CheckAsyncExtension
     {
         return check.IsValid ? await value() : DataOrError.Error<T>(check.Failure);
     }
+
+    public static async Task<DataOrError<T>> SelectAsync<T>(this Task<Check> check, Func<Task<T>> value)
+        => await (await check).SelectAsync(value);
+
+    public static async Task<DataOrError<T>> ThenAsync<T>(this Task<Check> check, Func<Task<DataOrError<T>>> value)
+        => await (await check).ThenAsync(value);
 }
