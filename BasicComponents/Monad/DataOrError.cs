@@ -1,19 +1,27 @@
 ﻿namespace BasicComponents.Monad;
 
-public class DataOrError<T>(T value, Exception error, bool isValid)
+public class DataOrError<T>(T value, BaseFailure error, bool isValid)
 {
     public bool IsValid { get; } = isValid;
-    public T Value => IsValid ? value : throw new InvalidOperationException($"Value is not valid.", error);
-    public Exception Error => IsValid ? throw new InvalidOperationException($"No Error available") : error;
-    
+    public T Value => IsValid ? value : throw new InvalidOperationException($"Value is not valid.", Failure.ToException());
+    public Exception Error => Failure.ToException();
+    public BaseFailure Failure => IsValid ? throw new InvalidOperationException($"No Error available") : error;
+
     public static implicit operator DataOrError<T>(T value) => new(value, null!, true);
+    
+    public readonly struct Step<TResult>(DataOrError<T> inner, Maybe<TResult> result)
+    {
+        public readonly DataOrError<T> Inner = inner;
+        public Maybe<TResult> Result { get; } = result;
+    }
 }
 
 public static class DataOrError
 {
     public static DataOrError<T> Create<T>(T value) => new(value, null!, true);
-    public static DataOrError<T> Error<T>(Exception error) => new(default!, error, false);
-    public static DataOrError<T> Error<T>(string error) => new(default!, new Exception(error), false);
+    public static DataOrError<T> Error<T>(BaseFailure error) => new(default!, error, false);
+    public static DataOrError<T> Error<T>(Exception error) => new(default!, new ExceptionFailure(error), false);
+    public static DataOrError<T> Error<T>(string error) => new(default!, new MessageFailure(error), false);
 
     public static DataOrError<T> Try<T>(Func<T> func)
     {
@@ -41,4 +49,9 @@ public static class DataOrError
             return Error<T>(e);
         }
     }
+
+    internal static DataOrError<T>.Step<TResult> AsStep<TResult, T>(this DataOrError<T> inner, TResult result)
+        => new(inner, Maybe.Create(result));
+    internal static DataOrError<T>.Step<TResult> AsStep<TResult, T>(this DataOrError<T> inner, Maybe<TResult> result)
+        => new(inner, result);
 }

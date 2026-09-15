@@ -5,8 +5,8 @@ public static class DataOrErrorExtension
     public static DataOrError<T> Flatten<T>(this DataOrError<DataOrError<T>> value)
         => value.IsValid ? value.Value : DataOrError.Error<T>(value.Error);
 
-    public static TResult Resolve<T, TResult>(this DataOrError<T> value, Func<T, TResult> ifValid, Func<Exception, TResult> ifError)
-        => value.IsValid ? ifValid(value.Value) : ifError(value.Error);
+    public static TResult Resolve<T, TResult>(this DataOrError<T> value, Func<T, TResult> ifValid, Func<BaseFailure, TResult> ifError)
+        => value.IsValid ? ifValid(value.Value) : ifError(value.Failure);
 
     public static DataOrError<TResult> Select<T, TResult>(this DataOrError<T> value, Func<T, TResult> func)
         => value.IsValid ? DataOrError.Try(() => func(value.Value)) : DataOrError.Error<TResult>(value.Error);
@@ -26,18 +26,19 @@ public static class DataOrErrorExtension
         }, e1 =>
         {
             return second.Resolve(r => DataOrError.Error<TResult>(e1),
-                e2 => DataOrError.Error<TResult>(new AggregateException(e1, e2).Flatten()));
+                e2 => DataOrError.Error<TResult>(e1.Concat(e2)));
         });
     }
 
     public static Check Check<T>(this DataOrError<T> value, Func<T, Check> func)
-        => value.Resolve(v => Monad.Check.Try(() => func(v)), Monad.Check.Failure);
+        => value.Resolve(v => Monad.Check.Try(() => func(v)), Monad.Check.Fail);
 
     public static Check Execute<T>(this DataOrError<T> value, Action<T> func)
         => value.IsValid
             ? Monad.Check.Try(() => func(value.Value))
-            : Monad.Check.Failure(value.Error);
+            : Monad.Check.Fail(value.Error);
 }
+
 
 public static class DataOrErrorAsyncExtension
 {

@@ -8,4 +8,20 @@
         <Authors>Krun</Authors>
         <Description>A bunch of Basic components for every day uses.</Description>
     </PropertyGroup>
+
+    <ItemGroup>
+        <None Update="Monad\DataOrErrorForwardStepExtension.t4">
+            <Generator>TextTemplatingFileGenerator</Generator>
+            <LastGenOutput>DataOrErrorForwardStepExtension.cs</LastGenOutput>
+        </None>
+        <Compile Update="Monad\DataOrErrorForwardStepExtension.cs">
+            <AutoGen>True</AutoGen>
+            <DesignTime>True</DesignTime>
+            <DependentUpon>DataOrErrorForwardStepExtension.t4</DependentUpon>
+        </Compile>
+    </ItemGroup>
+
+    <ItemGroup>
+        <Service Include="{508349b6-6b84-4df5-91f0-309beebad82d}" />
+    </ItemGroup>
 </Project>

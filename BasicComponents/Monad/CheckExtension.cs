@@ -14,7 +14,7 @@ public static class CheckExtension
     public static Check And(this Check check, Check other)
         => check.IsValid && other.IsValid 
             ? Check.Success()
-            : Check.Failure(new AggregateException(check.Error, other.Error).Flatten());
+            : Check.Fail(new AggregateException(check.Error, other.Error).Flatten());
 }
 
 public static class CheckAsyncExtension
