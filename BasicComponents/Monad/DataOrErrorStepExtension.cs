@@ -27,7 +27,7 @@ public static class DataOrErrorStepExtension
     public static DataOrError<T>.Step<TResult> OnError<T, TError, TResult>(this DataOrError<T>.Step<TResult> self,
         Func<TError, TResult> func)
         where TError : BaseFailure
-        => self.OnError<T, TError, TResult>((e, r) => r.OrElse(func(e)));
+        => self.OnError<T, TError, TResult>((e, r) => r.IsAvailable ? r.Value : func(e));
 
     public static DataOrError<T>.Step<TResult> OnError<T, TError, TResult>(this DataOrError<T>.Step<TResult> self,
         Func<TError, Maybe<TResult>, TResult> func)

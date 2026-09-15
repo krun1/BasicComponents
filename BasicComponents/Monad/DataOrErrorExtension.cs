@@ -3,16 +3,16 @@
 public static class DataOrErrorExtension
 {
     public static DataOrError<T> Flatten<T>(this DataOrError<DataOrError<T>> value)
-        => value.IsValid ? value.Value : DataOrError.Error<T>(value.Error);
+        => value.IsValid ? value.Value : DataOrError.Error<T>(value.Failure);
 
     public static TResult Resolve<T, TResult>(this DataOrError<T> value, Func<T, TResult> ifValid, Func<BaseFailure, TResult> ifError)
         => value.IsValid ? ifValid(value.Value) : ifError(value.Failure);
 
     public static DataOrError<TResult> Select<T, TResult>(this DataOrError<T> value, Func<T, TResult> func)
-        => value.IsValid ? DataOrError.Try(() => func(value.Value)) : DataOrError.Error<TResult>(value.Error);
+        => value.IsValid ? DataOrError.Try(() => func(value.Value)) : DataOrError.Error<TResult>(value.Failure);
 
     public static DataOrError<TResult> Then<T, TResult>(this DataOrError<T> value, Func<T, DataOrError<TResult>> func)
-        => value.IsValid ? DataOrError.Try(() => func(value.Value)).Flatten() : DataOrError.Error<TResult>(value.Error);
+        => value.IsValid ? DataOrError.Try(() => func(value.Value)).Flatten() : DataOrError.Error<TResult>(value.Failure);
 
     public static DataOrError<TValue> TryGetValue<TKey, TValue>(this DataOrError<TKey> key, Maybe.TryGetValueDelegate<TKey, TValue> func, Func<Either<string, Exception>> errorFunc)
         => key.Then(arg => DataOrError.TryGetValue(arg, func, errorFunc));
@@ -36,7 +36,7 @@ public static class DataOrErrorExtension
     public static Check Execute<T>(this DataOrError<T> value, Action<T> func)
         => value.IsValid
             ? Monad.Check.Try(() => func(value.Value))
-            : Monad.Check.Fail(value.Error);
+            : Monad.Check.Fail(value.Failure);
 }
 
 
@@ -53,21 +53,21 @@ public static class DataOrErrorAsyncExtension
     {
         var v = await value;
 
-        return v.IsValid ? DataOrError.Try(() => func(v.Value)) : DataOrError.Error<TResult>(v.Error);
+        return v.IsValid ? DataOrError.Try(() => func(v.Value)) : DataOrError.Error<TResult>(v.Failure);
     }
 
     public static async Task<DataOrError<TResult>> SelectAsync<T, TResult>(this Task<DataOrError<T>> value, Func<T, Task<TResult>> func)
     {
         var v = await value;
 
-        return v.IsValid ? await DataOrError.TryAsync(() => func(v.Value)) : DataOrError.Error<TResult>(v.Error);
+        return v.IsValid ? await DataOrError.TryAsync(() => func(v.Value)) : DataOrError.Error<TResult>(v.Failure);
     }
 
     public static async Task<DataOrError<TResult>> SelectAsync<T, TResult>(this DataOrError<T> value, Func<T, Task<TResult>> func)
     {
         return value.IsValid
             ? await DataOrError.TryAsync(() => func(value.Value))
-            : DataOrError.Error<TResult>(value.Error);
+            : DataOrError.Error<TResult>(value.Failure);
     }
 
     public static async Task<DataOrError<TResult>> ThenAsync<T, TResult>(this Task<DataOrError<T>> value, Func<T, DataOrError<TResult>> func)
@@ -76,7 +76,7 @@ public static class DataOrErrorAsyncExtension
 
         return v.IsValid
             ? DataOrError.Try(() => func(v.Value)).Flatten()
-            : DataOrError.Error<TResult>(v.Error);
+            : DataOrError.Error<TResult>(v.Failure);
     }
     
     public static async Task<DataOrError<TResult>> ThenAsync<T, TResult>(this Task<DataOrError<T>> value, Func<T, Task<DataOrError<TResult>>> func)
@@ -85,13 +85,13 @@ public static class DataOrErrorAsyncExtension
 
         return v.IsValid
             ? (await DataOrError.TryAsync(() => func(v.Value))).Flatten()
-            : DataOrError.Error<TResult>(v.Error);
+            : DataOrError.Error<TResult>(v.Failure);
     }
     
     public static async Task<DataOrError<TResult>> ThenAsync<T, TResult>(this DataOrError<T> value, Func<T, Task<DataOrError<TResult>>> func)
     {
         return value.IsValid
             ? (await DataOrError.TryAsync(() => func(value.Value))).Flatten()
-            : DataOrError.Error<TResult>(value.Error);
+            : DataOrError.Error<TResult>(value.Failure);
     }
 }

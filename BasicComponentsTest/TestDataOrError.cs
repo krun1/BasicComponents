@@ -123,4 +123,21 @@ public class Tests
             });
         Assert.That(i.Result.Value, Is.EqualTo(-1));
     }
+
+    [Test]
+    public async Task TestFlowHandledErrorSurvivesAsyncSteps()
+    {
+        var step = await DataOrError.Error<int>(new Exception("failure"))
+            .OnError((ExceptionFailure e) => -1)
+            .ThenAsync(i => Task.FromResult(DataOrError.Create(i + 1)));
+        step = await step
+            .OnError((ExceptionFailure e) =>
+            {
+                Assert.Fail();
+                return -2;
+            })
+            .SelectAsync(i => Task.FromResult(i + 1));
+
+        Assert.That(step.Resolve(i => i, e => -3), Is.EqualTo(-1));
+    }
 }
