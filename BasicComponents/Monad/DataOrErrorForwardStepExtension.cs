@@ -16,6 +16,9 @@ public static class DataOrErrorForwardStepExtension
     public static DataOrError<TResult>.Step<TStepResult> Then<T, TResult, TStepResult>(this DataOrError<T>.Step<TStepResult> value, Func<T, DataOrError<TResult>> func)
         => value.Inner.Then(func).AsStep(value.Result);
 
+    public static DataOrError<T>.Step<TStepResult> MapFailure<T, TError, TStepResult>(this DataOrError<T>.Step<TStepResult> value, Func<TError, BaseFailure> func) where TError : BaseFailure
+        => value.Inner.MapFailure(func).AsStep(value.Result);
+
     public static DataOrError<TValue>.Step<TStepResult> TryGetValue<TKey, TValue, TStepResult>(this DataOrError<TKey>.Step<TStepResult> key, Maybe.TryGetValueDelegate<TKey, TValue> func, Func<Either<string, Exception>> errorFunc)
         => key.Inner.TryGetValue(func, errorFunc).AsStep(key.Result);
 

@@ -16,6 +16,9 @@ public static class CheckExtension
             ? Check.Success()
             : Check.Fail(new AggregateException(check.Error, other.Error).Flatten());
 
+    public static Check MapFailure<TError>(this Check check, Func<TError, BaseFailure> func) where TError : BaseFailure
+        => check.IsValid ? check : Check.Fail(check.Failure.Map(func));
+
     public static Check OnError<TError>(this Check check, Action<TError> func) where TError : BaseFailure
     {
         if (!check.IsValid)
@@ -48,6 +51,10 @@ public static class CheckAsyncExtension
     {
         return check.IsValid ? await value() : DataOrError.Error<T>(check.Failure);
     }
+
+    public static async Task<Check> MapFailureAsync<TError>(this Task<Check> check, Func<TError, BaseFailure> func)
+        where TError : BaseFailure
+        => (await check).MapFailure(func);
 
     public static async Task<DataOrError<T>> SelectAsync<T>(this Task<Check> check, Func<Task<T>> value)
         => await (await check).SelectAsync(value);

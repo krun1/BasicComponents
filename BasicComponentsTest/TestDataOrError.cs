@@ -163,4 +163,81 @@ public class Tests
 
         Assert.That(step.Resolve(i => i, e => -3), Is.EqualTo(-1));
     }
+
+    class OtherTestError(string s) : MessageFailure(s) {}
+
+    [Test]
+    public void TestMapFailureReplacesMatchingFailure()
+    {
+        var mapped = DataOrError.Error<int>(new DerivedTestError("failure"))
+            .MapFailure((TestError e) => new OtherTestError($"mapped {e.Message}"));
+
+        Assert.That(mapped.Failure, Is.TypeOf<OtherTestError>());
+        Assert.That(mapped.Failure.Message, Is.EqualTo("mapped failure"));
+    }
+
+    [Test]
+    public void TestMapFailureKeepsOtherFailuresAndValues()
+    {
+        var other = DataOrError.Error<int>(new OtherTestError("failure"))
+            .MapFailure((TestError e) => new MessageFailure("mapped"));
+        var valid = DataOrError.Create(5)
+            .MapFailure((TestError e) => new MessageFailure("mapped"));
+
+        Assert.That(other.Failure, Is.TypeOf<OtherTestError>());
+        Assert.That(valid.Value, Is.EqualTo(5));
+    }
+
+    [Test]
+    public void TestMapFailureInAggregate()
+    {
+        var mapped = DataOrError.Error<int>(new TestError("first"))
+            .Zip(DataOrError.Error<int>(new OtherTestError("second")), (l, r) => l + r)
+            .MapFailure((TestError e) => new MessageFailure("mapped"));
+
+        var inner = ((AggregateFailure)mapped.Failure).Inner;
+        Assert.That(inner[0], Is.TypeOf<MessageFailure>());
+        Assert.That(inner[1], Is.TypeOf<OtherTestError>());
+    }
+
+    [Test]
+    public void TestMapFailureIgnoresHandledFailure()
+    {
+        var step = DataOrError.Error<int>(new TestError("failure"))
+            .OnError((TestError e) => -1)
+            .MapFailure((TestError e) =>
+            {
+                Assert.Fail();
+                return e;
+            });
+
+        Assert.That(step.Resolve(i => i), Is.EqualTo(-1));
+    }
+
+    [Test]
+    public void TestMapFailureThrowingKeepsOriginal()
+    {
+        var mapped = DataOrError.Error<int>(new TestError("failure"))
+            .MapFailure((TestError e) => throw new InvalidOperationException("boom"));
+
+        var inner = ((AggregateFailure)mapped.Failure).Inner;
+        Assert.That(inner[0], Is.TypeOf<TestError>());
+        Assert.That(inner[1].ToException(), Is.TypeOf<InvalidOperationException>());
+    }
+
+    [Test]
+    public async Task TestCheckMapFailure()
+    {
+        var mapped = Check.Fail(new TestError("failure"))
+            .MapFailure((TestError e) => new OtherTestError("mapped"));
+        var mappedAsync = await Task.FromResult(Check.Fail(new TestError("failure")))
+            .MapFailureAsync((TestError e) => new OtherTestError("mapped"));
+        var dataAsync = await Task.FromResult(DataOrError.Error<int>(new TestError("failure")))
+            .MapFailureAsync((TestError e) => new OtherTestError("mapped"));
+
+        Assert.That(mapped.Failure, Is.TypeOf<OtherTestError>());
+        Assert.That(mappedAsync.Failure, Is.TypeOf<OtherTestError>());
+        Assert.That(dataAsync.Failure, Is.TypeOf<OtherTestError>());
+        Assert.That(Check.Success().MapFailure((TestError e) => e).IsValid, Is.True);
+    }
 }

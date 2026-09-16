@@ -65,6 +65,31 @@ public static class FailureExtension
         return null;
     }
     
+    /// <summary>
+    /// Replaces the unhandled failure of type <typeparamref name="T"/> - or each of them, inside an
+    /// aggregate - with what <paramref name="func"/> makes of it. Any other failure is kept as is.
+    /// Should <paramref name="func"/> throw, the exception is added to the failure it was mapping.
+    /// </summary>
+    public static BaseFailure Map<T>(this BaseFailure self, Func<T, BaseFailure> func) where T : BaseFailure
+    {
+        if (self.IsHandled)
+            return self;
+        if (self is T t)
+        {
+            try
+            {
+                return func(t);
+            }
+            catch (Exception e)
+            {
+                return self.Concat(new ExceptionFailure(e));
+            }
+        }
+        if (self is AggregateFailure af)
+            return new AggregateFailure(af.Inner.Select(f => f.Map(func)));
+        return self;
+    }
+
     public static BaseFailure Concat(this BaseFailure l, BaseFailure r)
     {
         List<BaseFailure> result = [];

@@ -14,6 +14,10 @@ public static class DataOrErrorExtension
     public static DataOrError<TResult> Then<T, TResult>(this DataOrError<T> value, Func<T, DataOrError<TResult>> func)
         => value.IsValid ? DataOrError.Try(() => func(value.Value)).Flatten() : DataOrError.Error<TResult>(value.Failure);
 
+    public static DataOrError<T> MapFailure<T, TError>(this DataOrError<T> value, Func<TError, BaseFailure> func)
+        where TError : BaseFailure
+        => value.IsValid ? value : DataOrError.Error<T>(value.Failure.Map(func));
+
     public static DataOrError<TValue> TryGetValue<TKey, TValue>(this DataOrError<TKey> key, Maybe.TryGetValueDelegate<TKey, TValue> func, Func<Either<string, Exception>> errorFunc)
         => key.Then(arg => DataOrError.TryGetValue(arg, func, errorFunc));
 
@@ -48,6 +52,11 @@ public static class DataOrErrorAsyncExtension
         var v = await value;
         return v.IsValid ? ifValid(v.Value) : ifError(v.Error);
     }
+
+    public static async Task<DataOrError<T>> MapFailureAsync<T, TError>(this Task<DataOrError<T>> value,
+        Func<TError, BaseFailure> func)
+        where TError : BaseFailure
+        => (await value).MapFailure(func);
 
     public static async Task<DataOrError<TResult>> SelectAsync<T, TResult>(this Task<DataOrError<T>> value, Func<T, TResult> func)
     {
