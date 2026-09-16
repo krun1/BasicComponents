@@ -13,22 +13,29 @@ public class Check
     public bool IsValid { get; }
     public Exception Error => IsValid ? throw new InvalidOperationException("No Error available") : _error.ToException();
     public BaseFailure Failure => IsValid ? throw new InvalidOperationException("No Failure available") : _error;
-    
+
     public static Check operator &(Check left, Check right)
     {
-        return left.IsValid && right.IsValid
-            ? Success()
-            : Fail(new AggregateException(left.Error, right.Error).Flatten());
+        return (left.IsValid, right.IsValid) switch
+        {
+            (true, true) => Success(),
+            (false, false) => Fail(left.Failure.Concat(right.Failure)),
+            (false, true) => left,
+            _ => right
+        };
     }
 
     public static Check operator |(Check left, Check right)
     {
-        return left.IsValid || right.IsValid
-            ? Success()
-            : Fail(new AggregateException(left.Error, right.Error).Flatten());
+        return (left.IsValid, right.IsValid) switch
+        {
+            (true, true) => Success(),
+            (false, false) => Fail(left.Failure.Concat(right.Failure)),
+            (false, true) => right,
+            _ => left
+        };
     }
-    
-    
+
     public static Check Success() => new(null!, true);
     public static Check Fail(Exception error) => new(new ExceptionFailure(error), false);
     public static Check Fail(BaseFailure error) => new(error, false);

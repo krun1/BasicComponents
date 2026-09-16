@@ -15,6 +15,28 @@ public static class CheckExtension
         => check.IsValid && other.IsValid 
             ? Check.Success()
             : Check.Fail(new AggregateException(check.Error, other.Error).Flatten());
+
+    public static Check OnError<TError>(this Check check, Action<TError> func) where TError : BaseFailure
+    {
+        if (!check.IsValid)
+        {
+            var failure = check.Failure.Cast<TError>();
+
+            if (failure != null)
+            {
+                try
+                {
+                    func(failure);
+                }
+                catch (Exception e)
+                {
+                    return check & Check.Fail(e);
+                }
+                return Check.Fail(check.Failure.Handle(failure));
+            }
+        }
+        return check;
+    }
 }
 
 public static class CheckAsyncExtension
