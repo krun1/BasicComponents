@@ -65,4 +65,25 @@ public static class DataOrErrorStepExtension
             return ifFailure(self.Inner.Failure);
         throw new InvalidOperationException("Failure not handled", self.Inner.Failure.ToException());
     }
+
+    public static Check Check<T>(this DataOrError<T>.Step<T> self, Func<T, Check> check)
+    {
+        if (self.Inner.IsValid)
+            return check(self.Inner.Value);
+        return self.Inner.Failure.IsHandled
+            ? check(self.Result.Value)
+            : Monad.Check.Fail(self.Inner.Failure);
+    }
+    
+    public static async Task<Check> CheckAsync<T>(this DataOrError<T>.Step<T> self, Func<T, Task<Check>> check)
+    {
+        if (self.Inner.IsValid)
+            return await check(self.Inner.Value);
+        return self.Inner.Failure.IsHandled
+            ? await check(self.Result.Value)
+            : Monad.Check.Fail(self.Inner.Failure);
+    }
+    
+    public static async Task<Check> CheckAsync<T>(this Task<DataOrError<T>.Step<T>> self, Func<T, Task<Check>> check)
+        => await (await self).CheckAsync(async arg => await check(arg));
 }

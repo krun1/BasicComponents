@@ -25,9 +25,18 @@ public static class DataOrErrorForwardStepExtension
     public static DataOrError<TResult>.Step<TStepResult> Zip<TResult, T1, T2, TStepResult>(this DataOrError<T1>.Step<TStepResult> first, DataOrError<T2> second, Func<T1, T2, TResult> func)
         => first.Inner.Zip(second, func).AsStep(first.Result);
 
+    public static DataOrError<T>.Step<TStepResult> Or<T, TStepResult>(this DataOrError<T>.Step<TStepResult> self, DataOrError<T> other)
+        => self.Inner.Or(other).AsStep(self.Result);
+
+    public static DataOrError<T>.Step<TStepResult> Or<T, TStepResult>(this DataOrError<T>.Step<TStepResult> self, Func<DataOrError<T>> other)
+        => self.Inner.Or(other).AsStep(self.Result);
+
     public static async Task<DataOrError<TResult>.Step<TStepResult>> SelectAsync<T, TResult, TStepResult>(this DataOrError<T>.Step<TStepResult> value, Func<T, Task<TResult>> func)
         => (await value.Inner.SelectAsync(func)).AsStep(value.Result);
 
     public static async Task<DataOrError<TResult>.Step<TStepResult>> ThenAsync<T, TResult, TStepResult>(this DataOrError<T>.Step<TStepResult> value, Func<T, Task<DataOrError<TResult>>> func)
         => (await value.Inner.ThenAsync(func)).AsStep(value.Result);
+
+    public static async Task<DataOrError<T>.Step<TStepResult>> OrAsync<T, TStepResult>(this DataOrError<T>.Step<TStepResult> self, Func<Task<DataOrError<T>>> other)
+        => (await self.Inner.OrAsync(other)).AsStep(self.Result);
 }
