@@ -145,4 +145,17 @@ public static class DataOrErrorStepAsyncExtension
             ? await check(self.Result.Value)
             : Monad.Check.Fail(self.Inner.Failure);
     }
+    
+    [Async]
+    public static async Task<TResult> ResolveAsync<T, TResult>(this DataOrError<T>.Step<TResult> self,
+        Func<T, Task<TResult>> ifSuccess, Func<BaseFailure, Task<TResult>>? ifFailure = null)
+    {
+        if (self.Inner.IsValid)
+            return await ifSuccess(self.Inner.Value);
+        if (self.Inner.Failure.IsHandled)
+            return self.Result.Value;
+        if (ifFailure != null)
+            return await ifFailure(self.Inner.Failure);
+        throw new InvalidOperationException("Failure not handled", self.Inner.Failure.ToException());
+    }
 }

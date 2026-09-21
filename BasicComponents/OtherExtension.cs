@@ -86,6 +86,12 @@ namespace BasicComponents.Monad
 
         public static async Task<T> OrElseAsync<T>(this Task<DataOrError<T>> self, Func<Task<T>> other)
             => await (await self).OrElseAsync<T>(other);
+
+        public static async Task<TResult> ResolveAsync<T, TResult>(this Task<DataOrError<T>> value, Func<T, Task<TResult>> ifValid, Func<BaseFailure, TResult> ifError)
+            => await (await value).ResolveAsync<T, TResult>(ifValid, ifError);
+
+        public static async Task<TResult> ResolveAsync<T, TResult>(this Task<DataOrError<T>> value, Func<T, Task<TResult>> ifValid, Func<BaseFailure, Task<TResult>> ifError)
+            => await (await value).ResolveAsync<T, TResult>(ifValid, ifError);
     }
 
     // Source : Monad/DataOrErrorForwardStepExtension.cs
@@ -152,5 +158,8 @@ namespace BasicComponents.Monad
 
         public static async Task<Check> CheckAsync<T>(this Task<DataOrError<T>.Step<T>> self, Func<T, Task<Check>> check)
             => await (await self).CheckAsync<T>(check);
+
+        public static async Task<TResult> ResolveAsync<T, TResult>(this Task<DataOrError<T>.Step<TResult>> self, Func<T, Task<TResult>> ifSuccess, Func<BaseFailure, Task<TResult>>? ifFailure = null)
+            => await (await self).ResolveAsync<T, TResult>(ifSuccess, ifFailure);
     }
 }

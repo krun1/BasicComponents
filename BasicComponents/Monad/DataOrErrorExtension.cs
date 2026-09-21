@@ -86,4 +86,17 @@ public static class DataOrErrorAsyncExtension
     [Async]
     public static async Task<T> OrElseAsync<T>(this DataOrError<T> self, Func<Task<T>> other)
         => self.IsValid ? self.Value : await other();
+
+    [Async]
+    public static async Task<TResult> ResolveAsync<T, TResult>(this DataOrError<T> value,
+        Func<T, Task<TResult>> ifValid,
+        Func<BaseFailure, TResult> ifError)
+        => value.IsValid ? await ifValid(value.Value) : ifError(value.Failure);
+
+    [Async]
+    public static async Task<TResult> ResolveAsync<T, TResult>(this DataOrError<T> value,
+        Func<T, Task<TResult>> ifValid,
+        Func<BaseFailure, Task<TResult>> ifError)
+        => value.IsValid ? await ifValid(value.Value) : await ifError(value.Failure);
+
 }
