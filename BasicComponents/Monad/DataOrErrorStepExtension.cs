@@ -2,6 +2,7 @@ namespace BasicComponents.Monad;
 
 public static class DataOrErrorStepExtension
 {
+    [Async]
     public static DataOrError<T>.Step<TResult> OnError<T, TError, TResult>(this DataOrError<T> self, Func<TError, TResult> func)
     where TError : BaseFailure
     {
@@ -24,11 +25,13 @@ public static class DataOrErrorStepExtension
         }
     }
 
+    [Async]
     public static DataOrError<T>.Step<TResult> OnError<T, TError, TResult>(this DataOrError<T>.Step<TResult> self,
         Func<TError, TResult> func)
         where TError : BaseFailure
         => self.OnError<T, TError, TResult>((e, r) => r.IsAvailable ? r.Value : func(e));
 
+    [Async]
     public static DataOrError<T>.Step<TResult> OnError<T, TError, TResult>(this DataOrError<T>.Step<TResult> self,
         Func<TError, Maybe<TResult>, TResult> func)
         where TError : BaseFailure
@@ -54,6 +57,7 @@ public static class DataOrErrorStepExtension
         }
     }
 
+    [Async]
     public static TResult Resolve<T, TResult>(this DataOrError<T>.Step<TResult> self,
         Func<T, TResult> ifSuccess, Func<BaseFailure, TResult>? ifFailure = null)
     {
@@ -66,6 +70,7 @@ public static class DataOrErrorStepExtension
         throw new InvalidOperationException("Failure not handled", self.Inner.Failure.ToException());
     }
 
+    [Async]
     public static Check Check<T>(this DataOrError<T>.Step<T> self, Func<T, Check> check)
     {
         if (self.Inner.IsValid)

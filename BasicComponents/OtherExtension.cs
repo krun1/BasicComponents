@@ -6,6 +6,72 @@
 #nullable enable
 namespace BasicComponents.Monad
 {
+    // Source : Monad/CheckExtension.cs
+    public static class CheckExtensionOtherExtension
+    {
+        public static async Task<DataOrError<T>> SelectAsync<T>(this Task<Check> check, Func<T> value)
+            => (await check).Select<T>(value);
+
+        public static async Task<DataOrError<T>> ThenAsync<T>(this Task<Check> check, Func<DataOrError<T>> value)
+            => (await check).Then<T>(value);
+
+        public static async Task<Check> ThenAsync(this Task<Check> check, Func<Check> value)
+            => (await check).Then(value);
+
+        public static async Task<Check> AndAsync(this Task<Check> check, Check other)
+            => (await check).And(other);
+
+        public static async Task<Check> MapFailureAsync<TError>(this Task<Check> check, Func<TError, BaseFailure> func) where TError : BaseFailure
+            => (await check).MapFailure<TError>(func);
+
+        public static async Task<Check> OnErrorAsync<TError>(this Task<Check> check, Action<TError> func) where TError : BaseFailure
+            => (await check).OnError<TError>(func);
+    }
+
+    // Source : Monad/CheckExtension.cs
+    public static class CheckAsyncExtensionOtherExtension
+    {
+        public static async Task<DataOrError<T>> SelectAsync<T>(this Task<Check> check, Func<Task<T>> value)
+            => await (await check).SelectAsync<T>(value);
+
+        public static async Task<DataOrError<T>> ThenAsync<T>(this Task<Check> check, Func<Task<DataOrError<T>>> value)
+            => await (await check).ThenAsync<T>(value);
+    }
+
+    // Source : Monad/DataOrErrorExtension.cs
+    public static class DataOrErrorExtensionOtherExtension
+    {
+        public static async Task<TResult> ResolveAsync<T, TResult>(this Task<DataOrError<T>> value, Func<T, TResult> ifValid, Func<BaseFailure, TResult> ifError)
+            => (await value).Resolve<T, TResult>(ifValid, ifError);
+
+        public static async Task<DataOrError<TResult>> SelectAsync<T, TResult>(this Task<DataOrError<T>> value, Func<T, TResult> func)
+            => (await value).Select<T, TResult>(func);
+
+        public static async Task<DataOrError<TResult>> ThenAsync<T, TResult>(this Task<DataOrError<T>> value, Func<T, DataOrError<TResult>> func)
+            => (await value).Then<T, TResult>(func);
+
+        public static async Task<DataOrError<T>> MapFailureAsync<T, TError>(this Task<DataOrError<T>> value, Func<TError, BaseFailure> func) where TError : BaseFailure
+            => (await value).MapFailure<T, TError>(func);
+
+        public static async Task<DataOrError<TResult>> ZipAsync<TResult, T1, T2>(this Task<DataOrError<T1>> first, DataOrError<T2> second, Func<T1, T2, TResult> func)
+            => (await first).Zip<TResult, T1, T2>(second, func);
+
+        public static async Task<DataOrError<T>> OrAsync<T>(this Task<DataOrError<T>> self, DataOrError<T> other)
+            => (await self).Or<T>(other);
+
+        public static async Task<DataOrError<T>> OrAsync<T>(this Task<DataOrError<T>> self, Func<DataOrError<T>> other)
+            => (await self).Or<T>(other);
+
+        public static async Task<T> OrElseAsync<T>(this Task<DataOrError<T>> self, T other)
+            => (await self).OrElse<T>(other);
+
+        public static async Task<T> OrElseAsync<T>(this Task<DataOrError<T>> self, Func<T> other)
+            => (await self).OrElse<T>(other);
+
+        public static async Task<Check> CheckAsync<T>(this Task<DataOrError<T>> value, Func<T, Check> func)
+            => (await value).Check<T>(func);
+    }
+
     // Source : Monad/DataOrErrorExtension.cs
     public static class DataOrErrorAsyncExtensionOtherExtension
     {
@@ -20,6 +86,25 @@ namespace BasicComponents.Monad
 
         public static async Task<T> OrElseAsync<T>(this Task<DataOrError<T>> self, Func<Task<T>> other)
             => await (await self).OrElseAsync<T>(other);
+    }
+
+    // Source : Monad/DataOrErrorStepExtension.cs
+    public static class DataOrErrorStepExtensionOtherExtension
+    {
+        public static async Task<DataOrError<T>.Step<TResult>> OnErrorAsync<T, TError, TResult>(this Task<DataOrError<T>> self, Func<TError, TResult> func) where TError : BaseFailure
+            => (await self).OnError<T, TError, TResult>(func);
+
+        public static async Task<DataOrError<T>.Step<TResult>> OnErrorAsync<T, TError, TResult>(this Task<DataOrError<T>.Step<TResult>> self, Func<TError, TResult> func) where TError : BaseFailure
+            => (await self).OnError<T, TError, TResult>(func);
+
+        public static async Task<DataOrError<T>.Step<TResult>> OnErrorAsync<T, TError, TResult>(this Task<DataOrError<T>.Step<TResult>> self, Func<TError, Maybe<TResult>, TResult> func) where TError : BaseFailure
+            => (await self).OnError<T, TError, TResult>(func);
+
+        public static async Task<TResult> ResolveAsync<T, TResult>(this Task<DataOrError<T>.Step<TResult>> self, Func<T, TResult> ifSuccess, Func<BaseFailure, TResult>? ifFailure = null)
+            => (await self).Resolve<T, TResult>(ifSuccess, ifFailure);
+
+        public static async Task<Check> CheckAsync<T>(this Task<DataOrError<T>.Step<T>> self, Func<T, Check> check)
+            => (await self).Check<T>(check);
     }
 
     // Source : Monad/DataOrErrorStepExtension.cs

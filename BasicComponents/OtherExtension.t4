@@ -129,7 +129,9 @@
                 var generics = m.Generics != "" ? "<" + m.Generics + ">" : "";
                 var call = "(await " + self.Name + ")." + m.Name + generics + "(" + arguments + ")";
 
-                WriteLine(indent + "    " + m.Visibility + " static async " + m.NewReturnType + " " + m.Name + generics + "(" + declaration + ")" + m.Where);
+                var newName = m.Name.EndsWith("Async") ? m.Name : m.Name + "Async";
+
+                WriteLine(indent + "    " + m.Visibility + " static async " + m.NewReturnType + " " + newName + generics + "(" + declaration + ")" + m.Where);
                 WriteLine(indent + "        => " + (m.ReturnsAwaitable ? "await " : "") + call + ";");
             }
 
