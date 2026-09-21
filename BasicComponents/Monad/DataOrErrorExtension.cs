@@ -71,13 +71,7 @@ public static class DataOrErrorAsyncExtension
         return v.IsValid ? DataOrError.Try(() => func(v.Value)) : DataOrError.Error<TResult>(v.Failure);
     }
 
-    public static async Task<DataOrError<TResult>> SelectAsync<T, TResult>(this Task<DataOrError<T>> value, Func<T, Task<TResult>> func)
-    {
-        var v = await value;
-
-        return v.IsValid ? await DataOrError.TryAsync(() => func(v.Value)) : DataOrError.Error<TResult>(v.Failure);
-    }
-
+    [Async]
     public static async Task<DataOrError<TResult>> SelectAsync<T, TResult>(this DataOrError<T> value, Func<T, Task<TResult>> func)
     {
         return value.IsValid
@@ -85,7 +79,8 @@ public static class DataOrErrorAsyncExtension
             : DataOrError.Error<TResult>(value.Failure);
     }
 
-    public static async Task<DataOrError<TResult>> ThenAsync<T, TResult>(this Task<DataOrError<T>> value, Func<T, DataOrError<TResult>> func)
+    public static async Task<DataOrError<TResult>> ThenAsync<T, TResult>(this Task<DataOrError<T>> value,
+        Func<T, DataOrError<TResult>> func)
     {
         var v = await value;
 
@@ -94,38 +89,20 @@ public static class DataOrErrorAsyncExtension
             : DataOrError.Error<TResult>(v.Failure);
     }
 
-    public static async Task<DataOrError<TResult>> ThenAsync<T, TResult>(this Task<DataOrError<T>> value, Func<T, Task<DataOrError<TResult>>> func)
-    {
-        var v = await value;
-
-        return v.IsValid
-            ? (await DataOrError.TryAsync(() => func(v.Value))).Flatten()
-            : DataOrError.Error<TResult>(v.Failure);
-    }
-
-    public static async Task<DataOrError<TResult>> ThenAsync<T, TResult>(this DataOrError<T> value, Func<T, Task<DataOrError<TResult>>> func)
+    [Async]
+    public static async Task<DataOrError<TResult>> ThenAsync<T, TResult>(this DataOrError<T> value,
+        Func<T, Task<DataOrError<TResult>>> func)
     {
         return value.IsValid
             ? (await DataOrError.TryAsync(() => func(value.Value))).Flatten()
             : DataOrError.Error<TResult>(value.Failure);
     }
 
+    [Async]
     public static async Task<DataOrError<T>> OrAsync<T>(this DataOrError<T> self, Func<Task<DataOrError<T>>> other)
         => self.IsValid ? self : await other();
-    public static async Task<DataOrError<T>> OrAsync<T>(this Task<DataOrError<T>> self, Func<Task<DataOrError<T>>> other)
-    {
-        var res = await self;
 
-        return res.IsValid ? res : await other();
-    }
-
+    [Async]
     public static async Task<T> OrElseAsync<T>(this DataOrError<T> self, Func<Task<T>> other)
         => self.IsValid ? self.Value : await other();
-
-    public static async Task<T> OrElseAsync<T>(this Task<DataOrError<T>> self, Func<Task<T>> other)
-    {
-        var res = await self;
-
-        return res.IsValid ? res.Value : await other();
-    }
 }

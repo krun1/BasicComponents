@@ -53,7 +53,7 @@ public static class DataOrErrorStepExtension
             return DataOrError.Error<T>(e).AsStep(Maybe.Missing<TResult>());
         }
     }
-    
+
     public static TResult Resolve<T, TResult>(this DataOrError<T>.Step<TResult> self,
         Func<T, TResult> ifSuccess, Func<BaseFailure, TResult>? ifFailure = null)
     {
@@ -74,7 +74,64 @@ public static class DataOrErrorStepExtension
             ? check(self.Result.Value)
             : Monad.Check.Fail(self.Inner.Failure);
     }
-    
+}
+
+public static class DataOrErrorStepAsyncExtension
+{
+    [Async]
+    public static async Task<DataOrError<T>.Step<TResult>> OnErrorAsync<T, TError, TResult>(this DataOrError<T> self,
+        Func<TError, Task<TResult>> func) where TError : BaseFailure
+    {
+        if (self.IsValid)
+            return new DataOrError<T>.Step<TResult>(self, default!);
+        try
+        {
+            var failure = self.Failure.Cast<TError>();
+
+            if (failure != null)
+            {
+                var result = await func(failure);
+                return new DataOrError<T>.Step<TResult>(DataOrError.Error<T>(self.Failure.Handle(failure)), Maybe.Create(result));
+            }
+            return new DataOrError<T>.Step<TResult>(self, default!);
+        }
+        catch (Exception e)
+        {
+            return DataOrError.Error<T>(e).AsStep(Maybe.Missing<TResult>());
+        }
+    }
+
+    [Async]
+    public static Task<DataOrError<T>.Step<TResult>> OnErrorAsync<T, TError, TResult>(this DataOrError<T>.Step<TResult> self,
+        Func<TError, Task<TResult>> func) where TError : BaseFailure
+        => self.OnErrorAsync<T, TError, TResult>((error, maybe) => func(error));
+
+    [Async]
+    public static async Task<DataOrError<T>.Step<TResult>> OnErrorAsync<T, TError, TResult>(this DataOrError<T>.Step<TResult> self,
+        Func<TError, Maybe<TResult>, Task<TResult>> func) where TError : BaseFailure
+    {
+        if (self.Inner.IsValid)
+            return self;
+        try
+        {
+            var failure = self.Inner.Failure.Cast<TError>();
+
+            if (failure != null)
+            {
+                var result = await func(failure, self.Result);
+                return new DataOrError<T>.Step<TResult>(
+                    DataOrError.Error<T>(self.Inner.Failure.Handle(failure)),
+                    Maybe.Create(result));
+            }
+            return self;
+        }
+        catch (Exception e)
+        {
+            return DataOrError.Error<T>(e).AsStep(Maybe.Missing<TResult>());
+        }
+    }
+
+    [Async]
     public static async Task<Check> CheckAsync<T>(this DataOrError<T>.Step<T> self, Func<T, Task<Check>> check)
     {
         if (self.Inner.IsValid)
@@ -83,7 +140,4 @@ public static class DataOrErrorStepExtension
             ? await check(self.Result.Value)
             : Monad.Check.Fail(self.Inner.Failure);
     }
-    
-    public static async Task<Check> CheckAsync<T>(this Task<DataOrError<T>.Step<T>> self, Func<T, Task<Check>> check)
-        => await (await self).CheckAsync(async arg => await check(arg));
 }

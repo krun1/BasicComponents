@@ -19,6 +19,15 @@
             <DesignTime>True</DesignTime>
             <DependentUpon>DataOrErrorForwardStepExtension.t4</DependentUpon>
         </Compile>
+        <None Update="OtherExtension.t4">
+            <Generator>TextTemplatingFileGenerator</Generator>
+            <LastGenOutput>OtherExtension.cs</LastGenOutput>
+        </None>
+        <Compile Update="OtherExtension.cs">
+            <AutoGen>True</AutoGen>
+            <DesignTime>True</DesignTime>
+            <DependentUpon>OtherExtension.t4</DependentUpon>
+        </Compile>
     </ItemGroup>
 
     <ItemGroup>
