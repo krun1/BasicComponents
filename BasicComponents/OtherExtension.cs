@@ -88,6 +88,37 @@ namespace BasicComponents.Monad
             => await (await self).OrElseAsync<T>(other);
     }
 
+    // Source : Monad/DataOrErrorForwardStepExtension.cs
+    public static class DataOrErrorForwardStepExtensionOtherExtension
+    {
+        public static async Task<DataOrError<TResult>.Step<TStepResult>> SelectAsync<T, TResult, TStepResult>(this Task<DataOrError<T>.Step<TStepResult>> value, Func<T, TResult> func)
+            => (await value).Select<T, TResult, TStepResult>(func);
+
+        public static async Task<DataOrError<TResult>.Step<TStepResult>> ThenAsync<T, TResult, TStepResult>(this Task<DataOrError<T>.Step<TStepResult>> value, Func<T, DataOrError<TResult>> func)
+            => (await value).Then<T, TResult, TStepResult>(func);
+
+        public static async Task<DataOrError<T>.Step<TStepResult>> MapFailureAsync<T, TError, TStepResult>(this Task<DataOrError<T>.Step<TStepResult>> value, Func<TError, BaseFailure> func) where TError : BaseFailure
+            => (await value).MapFailure<T, TError, TStepResult>(func);
+
+        public static async Task<DataOrError<TResult>.Step<TStepResult>> ZipAsync<TResult, T1, T2, TStepResult>(this Task<DataOrError<T1>.Step<TStepResult>> first, DataOrError<T2> second, Func<T1, T2, TResult> func)
+            => (await first).Zip<TResult, T1, T2, TStepResult>(second, func);
+
+        public static async Task<DataOrError<T>.Step<TStepResult>> OrAsync<T, TStepResult>(this Task<DataOrError<T>.Step<TStepResult>> self, DataOrError<T> other)
+            => (await self).Or<T, TStepResult>(other);
+
+        public static async Task<DataOrError<T>.Step<TStepResult>> OrAsync<T, TStepResult>(this Task<DataOrError<T>.Step<TStepResult>> self, Func<DataOrError<T>> other)
+            => (await self).Or<T, TStepResult>(other);
+
+        public static async Task<DataOrError<TResult>.Step<TStepResult>> SelectAsync<T, TResult, TStepResult>(this Task<DataOrError<T>.Step<TStepResult>> value, Func<T, Task<TResult>> func)
+            => await (await value).SelectAsync<T, TResult, TStepResult>(func);
+
+        public static async Task<DataOrError<TResult>.Step<TStepResult>> ThenAsync<T, TResult, TStepResult>(this Task<DataOrError<T>.Step<TStepResult>> value, Func<T, Task<DataOrError<TResult>>> func)
+            => await (await value).ThenAsync<T, TResult, TStepResult>(func);
+
+        public static async Task<DataOrError<T>.Step<TStepResult>> OrAsync<T, TStepResult>(this Task<DataOrError<T>.Step<TStepResult>> self, Func<Task<DataOrError<T>>> other)
+            => await (await self).OrAsync<T, TStepResult>(other);
+    }
+
     // Source : Monad/DataOrErrorStepExtension.cs
     public static class DataOrErrorStepExtensionOtherExtension
     {

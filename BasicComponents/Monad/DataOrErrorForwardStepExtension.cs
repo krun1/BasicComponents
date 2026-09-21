@@ -10,33 +10,42 @@ public static class DataOrErrorForwardStepExtension
     public static DataOrError<T>.Step<TStepResult> Flatten<T, TStepResult>(this DataOrError<DataOrError<T>>.Step<TStepResult> value)
         => value.Inner.Flatten().AsStep(value.Result);
 
+    [Async]
     public static DataOrError<TResult>.Step<TStepResult> Select<T, TResult, TStepResult>(this DataOrError<T>.Step<TStepResult> value, Func<T, TResult> func)
         => value.Inner.Select(func).AsStep(value.Result);
 
+    [Async]
     public static DataOrError<TResult>.Step<TStepResult> Then<T, TResult, TStepResult>(this DataOrError<T>.Step<TStepResult> value, Func<T, DataOrError<TResult>> func)
         => value.Inner.Then(func).AsStep(value.Result);
 
+    [Async]
     public static DataOrError<T>.Step<TStepResult> MapFailure<T, TError, TStepResult>(this DataOrError<T>.Step<TStepResult> value, Func<TError, BaseFailure> func) where TError : BaseFailure
         => value.Inner.MapFailure(func).AsStep(value.Result);
 
     public static DataOrError<TValue>.Step<TStepResult> TryGetValue<TKey, TValue, TStepResult>(this DataOrError<TKey>.Step<TStepResult> key, Maybe.TryGetValueDelegate<TKey, TValue> func, Func<Either<string, Exception>> errorFunc)
         => key.Inner.TryGetValue(func, errorFunc).AsStep(key.Result);
 
+    [Async]
     public static DataOrError<TResult>.Step<TStepResult> Zip<TResult, T1, T2, TStepResult>(this DataOrError<T1>.Step<TStepResult> first, DataOrError<T2> second, Func<T1, T2, TResult> func)
         => first.Inner.Zip(second, func).AsStep(first.Result);
 
+    [Async]
     public static DataOrError<T>.Step<TStepResult> Or<T, TStepResult>(this DataOrError<T>.Step<TStepResult> self, DataOrError<T> other)
         => self.Inner.Or(other).AsStep(self.Result);
 
+    [Async]
     public static DataOrError<T>.Step<TStepResult> Or<T, TStepResult>(this DataOrError<T>.Step<TStepResult> self, Func<DataOrError<T>> other)
         => self.Inner.Or(other).AsStep(self.Result);
 
+    [Async]
     public static async Task<DataOrError<TResult>.Step<TStepResult>> SelectAsync<T, TResult, TStepResult>(this DataOrError<T>.Step<TStepResult> value, Func<T, Task<TResult>> func)
         => (await value.Inner.SelectAsync(func)).AsStep(value.Result);
 
+    [Async]
     public static async Task<DataOrError<TResult>.Step<TStepResult>> ThenAsync<T, TResult, TStepResult>(this DataOrError<T>.Step<TStepResult> value, Func<T, Task<DataOrError<TResult>>> func)
         => (await value.Inner.ThenAsync(func)).AsStep(value.Result);
 
+    [Async]
     public static async Task<DataOrError<T>.Step<TStepResult>> OrAsync<T, TStepResult>(this DataOrError<T>.Step<TStepResult> self, Func<Task<DataOrError<T>>> other)
         => (await self.Inner.OrAsync(other)).AsStep(self.Result);
 }

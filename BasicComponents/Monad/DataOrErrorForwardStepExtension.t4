@@ -18,7 +18,7 @@
     source = Regex.Replace(source, @"//.*?$|/\*.*?\*/", "", RegexOptions.Multiline | RegexOptions.Singleline);
 
     var methodRegex = new Regex(
-        @"public\s+static\s+(?!class\b)(?<head>[^(;{}]*?)\((?<params>.*?)\)\s*(?<where>where\s[^{;]*?)?\s*(=>|\{)",
+        @"(?<attrs>(?:\[[^\[\]]*(?:\[[^\[\]]*\][^\[\]]*)*\]\s*)*)public\s+static\s+(?!class\b)(?<head>[^(;{}]*?)\((?<params>.*?)\)\s*(?<where>where\s[^{;]*?)?\s*(=>|\{)",
         RegexOptions.Singleline);
     var headRegex = new Regex(@"^(?:(?<async>async)\s+)?(?<ret>.+?)\s+(?<name>\w+)\s*(?<gen><.+>)?$", RegexOptions.Singleline);
 
@@ -43,6 +43,10 @@
 
         methods.Add(new MethodInfo
         {
+            Attributes = Regex.Matches(match.Groups["attrs"].Value, @"\[[^\[\]]*(?:\[[^\[\]]*\][^\[\]]*)*\]")
+                .Cast<Match>()
+                .Select(a => Normalize(a.Value))
+                .ToList(),
             IsAsync = headMatch.Groups["async"].Success,
             ReturnType = Normalize(headMatch.Groups["ret"].Value),
             Name = headMatch.Groups["name"].Value,
@@ -74,6 +78,8 @@ public static class DataOrErrorForwardStepExtension
         var arguments = string.Join(", ", m.Parameters.Skip(1).Select(p => p.Argument));
         if (i > 0)
             WriteLine("");
+        foreach (var attribute in m.Attributes)
+            WriteLine("    " + attribute);
 #>
 <#
         if (m.IsTask)
@@ -96,6 +102,7 @@ public static class DataOrErrorForwardStepExtension
 <#+
     private class MethodInfo
     {
+        public List<string> Attributes;
         public bool IsAsync;
         public string ReturnType;
         public string Name;
