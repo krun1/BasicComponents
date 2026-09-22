@@ -63,5 +63,17 @@ public class Check
             return Fail(e);
         }
     }
+    
+    public static async Task<Check> TryAsync(Func<Task<Check>> action)
+    {
+        try
+        {
+            return await action();
+        }
+        catch (Exception e)
+        {
+            return Fail(e);
+        }
+    }
 }
 
