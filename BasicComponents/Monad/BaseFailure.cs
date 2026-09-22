@@ -1,41 +1,100 @@
 using System.Collections.Immutable;
+using System.Diagnostics;
+using System.Reflection;
+using System.Runtime.ExceptionServices;
 
 namespace BasicComponents.Monad;
 
 public abstract class BaseFailure
 {
+    private readonly StackTrace? _stackTrace;
+
+    protected BaseFailure() : this(captureStackTrace: true)
+    {
+    }
+
+    private protected BaseFailure(bool captureStackTrace)
+    {
+        if (captureStackTrace)
+            _stackTrace = Capture();
+    }
+
+    /// <summary>
+    /// The stack the failure was created from - its own constructors and the factories of this library
+    /// left out.
+    /// </summary>
+    public virtual StackTrace? StackTrace => _stackTrace;
+
     public abstract string Message { get; }
     public abstract Exception ToException();
     public virtual bool IsHandled => false;
+
+    /// <summary>
+    /// Gives <paramref name="exception"/>, never thrown, the <see cref="StackTrace"/> of this failure,
+    /// so that logging it shows where the failure came from.
+    /// </summary>
+    protected Exception WithStackTrace(Exception exception)
+    {
+        if (StackTrace is { FrameCount: > 0 } stackTrace && exception.StackTrace == null)
+        {
+            try
+            {
+                ExceptionDispatchInfo.SetRemoteStackTrace(exception, stackTrace.ToString());
+            }
+            catch (InvalidOperationException)
+            {
+                // thrown or given a stack trace meanwhile: it already tells where it comes from
+            }
+        }
+        return exception;
+    }
+
+    private static StackTrace Capture()
+    {
+        var frames = new StackTrace(1, fNeedFileInfo: true).GetFrames();
+        var first = Array.FindIndex(frames, f => !IsLibraryFrame(f.GetMethod()));
+        return new StackTrace(first < 0 ? frames : frames[first..]);
+    }
+
+    private static bool IsLibraryFrame(MethodBase? method)
+        => method?.DeclaringType is { } type
+           && (type.Assembly == typeof(BaseFailure).Assembly
+               || (method.IsConstructor && typeof(BaseFailure).IsAssignableFrom(type)));
 }
 
-public sealed class ExceptionFailure(Exception e) : BaseFailure
+public sealed class ExceptionFailure(Exception e) : BaseFailure(captureStackTrace: e.StackTrace == null)
 {
     public Exception Exception => e;
     public override string Message => e.Message;
-    public override Exception ToException() => e;
+
+    /// <summary>Where <see cref="Exception"/> was thrown, or else where the failure was created.</summary>
+    public override StackTrace? StackTrace => e.StackTrace != null ? new StackTrace(e, fNeedFileInfo: true) : base.StackTrace;
+
+    public override Exception ToException() => WithStackTrace(e);
 }
 
 public class MessageFailure(string s) : BaseFailure
 {
     public override string Message => s;
-    public override Exception ToException() => new(Message);
+    public override Exception ToException() => WithStackTrace(new Exception(Message));
 }
 
 public sealed class ValueFailure<T>(T value) : BaseFailure
 {
     public override string Message => $"Invalid value {value}";
-    public override Exception ToException() => new(Message);
+    public override Exception ToException() => WithStackTrace(new Exception(Message));
 }
 
-public class HandledFailure(BaseFailure inner) : BaseFailure
+public class HandledFailure(BaseFailure inner) : BaseFailure(captureStackTrace: false)
 {
     public override bool IsHandled => true;
     public override string Message => inner.Message;
+    public override StackTrace? StackTrace => inner.StackTrace;
     public override Exception ToException() => inner.ToException();
 }
 
-public class AggregateFailure(IEnumerable<BaseFailure> inner) : BaseFailure
+/// <summary>Has no <see cref="BaseFailure.StackTrace"/> of its own: each of <see cref="Inner"/> keeps its.</summary>
+public class AggregateFailure(IEnumerable<BaseFailure> inner) : BaseFailure(captureStackTrace: false)
 {
     public override bool IsHandled => Inner.All(f => f.IsHandled);
 
