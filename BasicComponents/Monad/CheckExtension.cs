@@ -26,10 +26,22 @@ public static class CheckExtension
 
     [Async]
     public static Check OnError<TError>(this Check check, Action<TError> func) where TError : BaseFailure
+        => OnFailure(check, f => f.Cast<TError>(), func);
+
+    /// <summary>
+    /// Like <see cref="OnError{TError}"/>, for the <see cref="ExceptionFailure"/> whose exception is a
+    /// <typeparamref name="TException"/> or derives from it.
+    /// </summary>
+    [Async]
+    public static Check OnException<TException>(this Check check, Action<TException> func) where TException : Exception
+        => OnFailure(check, f => f.CastException<TException>(), f => func((TException)f.Exception));
+
+    private static Check OnFailure<TError>(Check check, Func<BaseFailure, TError?> select, Action<TError> func)
+        where TError : BaseFailure
     {
         if (!check.IsValid)
         {
-            var failure = check.Failure.Cast<TError>();
+            var failure = select(check.Failure);
 
             if (failure != null)
             {

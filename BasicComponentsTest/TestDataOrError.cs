@@ -240,4 +240,67 @@ public class Tests
         Assert.That(dataAsync.Failure, Is.TypeOf<OtherTestError>());
         Assert.That(Check.Success().MapFailure((TestError e) => e).IsValid, Is.True);
     }
+
+    [Test]
+    public void TestOnExceptionMatchesDerivedType()
+    {
+        var step = DataOrError.Error<int>(new TaskCanceledException("canceled"))
+            .OnException((OperationCanceledException e) =>
+            {
+                Assert.That(e, Is.TypeOf<TaskCanceledException>());
+                return -1;
+            });
+
+        Assert.That(step.Resolve(i => i), Is.EqualTo(-1));
+    }
+
+    [Test]
+    public void TestOnExceptionSkipsOtherType()
+    {
+        var called = false;
+        var step = DataOrError.Error<int>(new InvalidOperationException("boom"))
+            .OnException((OperationCanceledException _) =>
+            {
+                called = true;
+                return -1;
+            })
+            .OnException((InvalidOperationException _) => -2);
+
+        Assert.That(called, Is.False);
+        Assert.That(step.Resolve(i => i), Is.EqualTo(-2));
+    }
+
+    [Test]
+    public void TestOnExceptionIgnoresNonExceptionFailure()
+    {
+        var step = DataOrError.Error<int>(new TestError("failure"))
+            .OnException((Exception _) => -1);
+
+        Assert.That(step.Inner.Failure.IsHandled, Is.False);
+    }
+
+    [Test]
+    public void TestOnExceptionInsideAggregate()
+    {
+        var check = Check.Fail(new TestError("failure")) & Check.Fail(new ArgumentException("arg"));
+        ArgumentException? caught = null;
+
+        var handled = check.OnException((ArgumentException e) => caught = e);
+
+        Assert.That(caught?.Message, Is.EqualTo("arg"));
+        Assert.That(handled.Failure.Flatten().Count(f => !f.IsHandled), Is.EqualTo(1));
+    }
+
+    [Test]
+    public async Task TestOnExceptionAsync()
+    {
+        var result = await DataOrError.TryAsync<int>(() => throw new TimeoutException())
+            .OnExceptionAsync((TimeoutException _) => Task.FromResult(-1))
+            .ResolveAsync(i => i);
+        var checkHandled = await Task.FromResult(Check.Fail(new TimeoutException()))
+            .OnExceptionAsync((TimeoutException _) => { });
+
+        Assert.That(result, Is.EqualTo(-1));
+        Assert.That(checkHandled.Failure.IsHandled, Is.True);
+    }
 }

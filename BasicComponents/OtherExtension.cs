@@ -26,6 +26,9 @@ namespace BasicComponents.Monad
 
         public static async Task<Check> OnErrorAsync<TError>(this Task<Check> check, Action<TError> func) where TError : BaseFailure
             => (await check).OnError<TError>(func);
+
+        public static async Task<Check> OnExceptionAsync<TException>(this Task<Check> check, Action<TException> func) where TException : Exception
+            => (await check).OnException<TException>(func);
     }
 
     // Source : Monad/CheckExtension.cs
@@ -137,6 +140,15 @@ namespace BasicComponents.Monad
         public static async Task<DataOrError<T>.Step<TResult>> OnErrorAsync<T, TError, TResult>(this Task<DataOrError<T>.Step<TResult>> self, Func<TError, Maybe<TResult>, TResult> func) where TError : BaseFailure
             => (await self).OnError<T, TError, TResult>(func);
 
+        public static async Task<DataOrError<T>.Step<TResult>> OnExceptionAsync<T, TException, TResult>(this Task<DataOrError<T>> self, Func<TException, TResult> func) where TException : Exception
+            => (await self).OnException<T, TException, TResult>(func);
+
+        public static async Task<DataOrError<T>.Step<TResult>> OnExceptionAsync<T, TException, TResult>(this Task<DataOrError<T>.Step<TResult>> self, Func<TException, TResult> func) where TException : Exception
+            => (await self).OnException<T, TException, TResult>(func);
+
+        public static async Task<DataOrError<T>.Step<TResult>> OnExceptionAsync<T, TException, TResult>(this Task<DataOrError<T>.Step<TResult>> self, Func<TException, Maybe<TResult>, TResult> func) where TException : Exception
+            => (await self).OnException<T, TException, TResult>(func);
+
         public static async Task<TResult> ResolveAsync<T, TResult>(this Task<DataOrError<T>.Step<TResult>> self, Func<T, TResult> ifSuccess, Func<BaseFailure, TResult>? ifFailure = null)
             => (await self).Resolve<T, TResult>(ifSuccess, ifFailure);
 
@@ -155,6 +167,15 @@ namespace BasicComponents.Monad
 
         public static async Task<DataOrError<T>.Step<TResult>> OnErrorAsync<T, TError, TResult>(this Task<DataOrError<T>.Step<TResult>> self, Func<TError, Maybe<TResult>, Task<TResult>> func) where TError : BaseFailure
             => await (await self).OnErrorAsync<T, TError, TResult>(func);
+
+        public static async Task<DataOrError<T>.Step<TResult>> OnExceptionAsync<T, TException, TResult>(this Task<DataOrError<T>> self, Func<TException, Task<TResult>> func) where TException : Exception
+            => await (await self).OnExceptionAsync<T, TException, TResult>(func);
+
+        public static async Task<DataOrError<T>.Step<TResult>> OnExceptionAsync<T, TException, TResult>(this Task<DataOrError<T>.Step<TResult>> self, Func<TException, Task<TResult>> func) where TException : Exception
+            => await (await self).OnExceptionAsync<T, TException, TResult>(func);
+
+        public static async Task<DataOrError<T>.Step<TResult>> OnExceptionAsync<T, TException, TResult>(this Task<DataOrError<T>.Step<TResult>> self, Func<TException, Maybe<TResult>, Task<TResult>> func) where TException : Exception
+            => await (await self).OnExceptionAsync<T, TException, TResult>(func);
 
         public static async Task<Check> CheckAsync<T>(this Task<DataOrError<T>.Step<T>> self, Func<T, Task<Check>> check)
             => await (await self).CheckAsync<T>(check);

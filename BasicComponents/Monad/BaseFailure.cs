@@ -11,6 +11,7 @@ public abstract class BaseFailure
 
 public sealed class ExceptionFailure(Exception e) : BaseFailure
 {
+    public Exception Exception => e;
     public override string Message => e.Message;
     public override Exception ToException() => e;
 }
@@ -49,16 +50,26 @@ public class AggregateFailure(IEnumerable<BaseFailure> inner) : BaseFailure
 public static class FailureExtension
 {
     public static T? Cast<T>(this BaseFailure s) where T : BaseFailure
+        => s.Find<T>(_ => true);
+
+    /// <summary>
+    /// Finds the unhandled <see cref="ExceptionFailure"/> whose exception is a <typeparamref name="TException"/>,
+    /// or derives from it - looking inside aggregates too.
+    /// </summary>
+    public static ExceptionFailure? CastException<TException>(this BaseFailure s) where TException : Exception
+        => s.Find<ExceptionFailure>(f => f.Exception is TException);
+
+    private static T? Find<T>(this BaseFailure s, Func<T, bool> predicate) where T : BaseFailure
     {
         if (s.IsHandled)
             return null;
-        if (s is T t)
+        if (s is T t && predicate(t))
             return t;
         if (s is AggregateFailure ae)
         {
             foreach (var a in ae.Inner)
             {
-                if (a.Cast<T>() is { } r)
+                if (a.Find(predicate) is { } r)
                     return r;
             }
         }
