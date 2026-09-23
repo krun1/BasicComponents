@@ -87,10 +87,11 @@ public sealed class ValueFailure<T>(T value) : BaseFailure
 
 public class HandledFailure(BaseFailure inner) : BaseFailure(captureStackTrace: false)
 {
+    public BaseFailure Inner => inner;
     public override bool IsHandled => true;
-    public override string Message => inner.Message;
-    public override StackTrace? StackTrace => inner.StackTrace;
-    public override Exception ToException() => inner.ToException();
+    public override string Message => Inner.Message;
+    public override StackTrace? StackTrace => Inner.StackTrace;
+    public override Exception ToException() => Inner.ToException();
 }
 
 /// <summary>Has no <see cref="BaseFailure.StackTrace"/> of its own: each of <see cref="Inner"/> keeps its.</summary>
@@ -108,27 +109,29 @@ public class AggregateFailure(IEnumerable<BaseFailure> inner) : BaseFailure(capt
 
 public static class FailureExtension
 {
-    public static T? Cast<T>(this BaseFailure s) where T : BaseFailure
-        => s.Find<T>(_ => true);
+    public static T? Cast<T>(this BaseFailure s, bool ignoreHandled = false) where T : BaseFailure
+        => s.Find<T>(_ => true, ignoreHandled);
 
     /// <summary>
     /// Finds the unhandled <see cref="ExceptionFailure"/> whose exception is a <typeparamref name="TException"/>,
     /// or derives from it - looking inside aggregates too.
     /// </summary>
-    public static ExceptionFailure? CastException<TException>(this BaseFailure s) where TException : Exception
-        => s.Find<ExceptionFailure>(f => f.Exception is TException);
+    public static ExceptionFailure? CastException<TException>(this BaseFailure s, bool ignoreHandled = false) where TException : Exception
+        => s.Find<ExceptionFailure>(f => f.Exception is TException, ignoreHandled);
 
-    private static T? Find<T>(this BaseFailure s, Func<T, bool> predicate) where T : BaseFailure
+    private static T? Find<T>(this BaseFailure s, Func<T, bool> predicate, bool ignoreHandled) where T : BaseFailure
     {
         if (s.IsHandled)
-            return null;
+            return ignoreHandled 
+                ? ((HandledFailure)s).Inner.Find(predicate, ignoreHandled)
+                : null;
         if (s is T t && predicate(t))
             return t;
         if (s is AggregateFailure ae)
         {
             foreach (var a in ae.Inner)
             {
-                if (a.Find(predicate) is { } r)
+                if (a.Find(predicate, ignoreHandled) is { } r)
                     return r;
             }
         }
