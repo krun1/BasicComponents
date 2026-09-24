@@ -303,4 +303,34 @@ public class Tests
         Assert.That(result, Is.EqualTo(-1));
         Assert.That(checkHandled.Failure.IsHandled, Is.True);
     }
+
+    [Test]
+    public void TestMapExceptionMapsOnlyTheFirstMatchingType()
+    {
+        var mapped = Check.Fail(new ArgumentNullException("arg"))
+            .MapException((InvalidOperationException _) => new OtherTestError("invalid"))
+            .MapException((ArgumentException _) => new OtherTestError("argument"))
+            .MapException((Exception _) => new OtherTestError("other"));
+
+        Assert.That(mapped.Failure, Is.TypeOf<OtherTestError>());
+        Assert.That(mapped.Failure.Message, Is.EqualTo("argument"));
+    }
+
+    [Test]
+    public void TestMapExceptionKeepsOtherFailures()
+    {
+        var mapped = Check.Fail(new TestError("failure"))
+            .MapException((Exception _) => new OtherTestError("other"));
+
+        Assert.That(mapped.Failure, Is.TypeOf<TestError>());
+    }
+
+    [Test]
+    public async Task TestMapExceptionAsync()
+    {
+        var mapped = await Task.FromResult(Check.Fail(new TimeoutException()))
+            .MapExceptionAsync((TimeoutException _) => new OtherTestError("timeout"));
+
+        Assert.That(mapped.Failure.Message, Is.EqualTo("timeout"));
+    }
 }

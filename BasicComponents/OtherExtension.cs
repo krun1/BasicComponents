@@ -24,6 +24,9 @@ namespace BasicComponents.Monad
         public static async Task<Check> MapFailureAsync<TError>(this Task<Check> check, Func<TError, BaseFailure> func) where TError : BaseFailure
             => (await check).MapFailure<TError>(func);
 
+        public static async Task<Check> MapExceptionAsync<TException>(this Task<Check> check, Func<TException, BaseFailure> func) where TException : Exception
+            => (await check).MapException<TException>(func);
+
         public static async Task<Check> OnErrorAsync<TError>(this Task<Check> check, Action<TError> func) where TError : BaseFailure
             => (await check).OnError<TError>(func);
 

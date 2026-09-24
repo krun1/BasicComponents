@@ -24,6 +24,15 @@ public static class CheckExtension
     public static Check MapFailure<TError>(this Check check, Func<TError, BaseFailure> func) where TError : BaseFailure
         => check.IsValid ? check : Check.Fail(check.Failure.Map(func));
 
+    /// <summary>
+    /// Like <see cref="MapFailure{TError}"/>, for the <see cref="ExceptionFailure"/> whose exception is a
+    /// <typeparamref name="TException"/> or derives from it. Once mapped, a failure is no longer an
+    /// <see cref="ExceptionFailure"/>, so chained calls map each exception at most once.
+    /// </summary>
+    [Async]
+    public static Check MapException<TException>(this Check check, Func<TException, BaseFailure> func) where TException : Exception
+        => check.MapFailure((ExceptionFailure f) => f.Exception is TException e ? func(e) : f);
+
     [Async]
     public static Check OnError<TError>(this Check check, Action<TError> func) where TError : BaseFailure
         => OnFailure(check, f => f.Cast<TError>(), func);
